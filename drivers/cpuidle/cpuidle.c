@@ -29,16 +29,6 @@ static void (*pm_idle_old)(void);
 
 static int enabled_devices;
 
-#if defined(CONFIG_ARCH_HAS_CPU_IDLE_WAIT)
-static void cpuidle_kick_cpus(void)
-{
-	cpu_idle_wait();
-}
-#elif defined(CONFIG_SMP)
-# error "Arch needs cpu_idle_wait() equivalent here"
-#else /* !CONFIG_ARCH_HAS_CPU_IDLE_WAIT && !CONFIG_SMP */
-static void cpuidle_kick_cpus(void) {}
-#endif
 
 static int __cpuidle_register_device(struct cpuidle_device *dev);
 
@@ -135,7 +125,7 @@ void cpuidle_uninstall_idle_handler(void)
 {
 	if (enabled_devices && pm_idle_old && (pm_idle != pm_idle_old)) {
 		pm_idle = pm_idle_old;
-		cpuidle_kick_cpus();
+		kick_all_cpus_sync();
 	}
 }
 
@@ -216,7 +206,7 @@ int cpuidle_enable_device(struct cpuidle_device *dev)
 	if (!cpuidle_get_driver() || !cpuidle_curr_governor)
 		return -EIO;
 	if (!dev->state_count)
-		return -EINVAL;
+		dev->state_count = drv->state_count;
 
 	if (dev->registered == 0) {
 		ret = __cpuidle_register_device(dev);
