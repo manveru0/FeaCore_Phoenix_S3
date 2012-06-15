@@ -828,3 +828,76 @@ err_vdd_arm:
 	return -EINVAL;
 }
 late_initcall(exynos_cpufreq_init);
+
+ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf)
+{
+	int i, len = 0;
+	if (buf)
+	{
+		for (i = exynos_info->max_support_idx; i<=exynos_info->min_support_idx; i++)
+		{
+			if(exynos_info->freq_table[i].frequency==CPUFREQ_ENTRY_INVALID) continue;
+			len += sprintf(buf + len, "%dmhz: %d mV\n", exynos_info->freq_table[i].frequency/1000,exynos_info->volt_table[i]/1000);
+		}
+	}
+	return len;
+}
+
+ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
+                                      const char *buf, size_t count)
+{
+	int i = 0;
+	int j = 0;
+	int u[20] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } , stepcount = 0, tokencount = 0;
+
+	if(count < 1) return -EINVAL;
+
+	//parse input... time to miss strtok... -gm
+	for(j = 0; i < count; i++)
+	{
+		char c = buf[i];
+		if(c >= '0' && c <= '9')
+		{
+			if(tokencount < j + 1) tokencount = j + 1;
+			u[j] *= 10;
+			u[j] += (c - '0');
+		}
+		else if(c == ' ' || c == '\t')
+		{
+			if(u[j] != 0)
+			{
+				j++;
+			}
+		}
+		else
+			break;
+	}
+
+	//find number of available steps
+	for(i = exynos_info->max_support_idx; i<=exynos_info->min_support_idx; i++)
+	{
+		if(exynos_info->freq_table[i].frequency==CPUFREQ_ENTRY_INVALID) continue;
+		stepcount++;
+	}
+	//do not keep backward compatibility for scripts this time.
+	//I want the number of tokens to be exactly the same with stepcount -gm
+	if(stepcount != tokencount) return -EINVAL;
+
+	//we have u[0] starting from the first available frequency to u[stepcount]
+	//that is why we use an additiona j here...
+	for(j=0, i = exynos_info->max_support_idx; i<=exynos_info->min_support_idx; i++)
+	{
+		if(exynos_info->freq_table[i].frequency==CPUFREQ_ENTRY_INVALID) continue;
+		if (u[j] > CPU_UV_MV_MAX / 1000)
+		{
+			u[j] = CPU_UV_MV_MAX / 1000;
+		}
+		else if (u[j] < CPU_UV_MV_MIN / 1000)
+		{
+			u[j] = CPU_UV_MV_MIN / 1000;
+		}
+		exynos_info->volt_table[i] = u[j]*1000;
+		j++;
+	}
+	return count;
+}
