@@ -156,7 +156,7 @@ static ssize_t lcd_store_contrast(struct device *dev,
 
 	mutex_lock(&ld->ops_lock);
 	if (ld->ops && ld->ops->set_contrast) {
-		pr_debug("lcd: set contrast to %lu\n", contrast);
+		pr_debug("lcd: set contrast to %d\n", contrast);
 		ld->ops->set_contrast(ld, contrast);
 		rc = count;
 	}
