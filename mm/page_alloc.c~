@@ -1808,14 +1808,7 @@ void warn_alloc_failed(gfp_t gfp_mask, int order, const char *fmt, ...)
 	if (fmt) {
 		struct va_format vaf;
 		va_list args;
-
 		va_start(args, fmt);
-
-		vaf.fmt = fmt;
-		vaf.va = &args;
-
-		pr_warn("%pV", &vaf);
-
 		va_end(args);
 	}
 
