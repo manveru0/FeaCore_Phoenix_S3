@@ -67,7 +67,7 @@
 
 /* Polling work */
 #undef	DEBUG_FUELGAUGE_POLLING
-#define MAX17047_POLLING_INTERVAL	10000
+#define MAX17047_POLLING_INTERVAL	20000
 
 #if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_MACH_M0_CTC)
 static void max17047_adjust_fullsoc(struct i2c_client *client);
