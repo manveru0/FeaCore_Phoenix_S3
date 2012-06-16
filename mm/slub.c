@@ -2392,7 +2392,7 @@ static void early_kmem_cache_node_alloc(int node)
 	 * the boot sequence, we still disable irqs.
 	 */
 	local_irq_save(flags);
-	add_partial(n, page, 0);
+	add_partial(n, page, 1);
 	local_irq_restore(flags);
 }
 
