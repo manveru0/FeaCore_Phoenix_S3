@@ -351,6 +351,12 @@ static int xhci_try_enable_msi(struct usb_hcd *hcd)
 	if (!ret)
 		/* hcd->irq is -1, we have MSI */
 		return 0;
+	
+	if (!pdev->irq) {
+			xhci_err(xhci, "No msi-x/msi found and "
+					"no IRQ in BIOS\n");
+			return -EINVAL;
+		}
 
 	/* fall back to legacy interrupt*/
 	ret = request_irq(pdev->irq, &usb_hcd_irq, IRQF_SHARED,
