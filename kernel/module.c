@@ -1025,6 +1025,10 @@ static int check_version(Elf_Shdr *sechdrs,
 	/* Exporting module didn't supply crcs?  OK, we're already tainted. */
 	if (!crc)
 		return 1;
+	
+	/* Disable module_layout check for Samsung exfat modules to load. */
+	if (!strncmp("exfat_", mod->name, 6))
+	return 1;
 
 	/* No versions at all?  modprobe --force does this. */
 	if (versindex == 0)
