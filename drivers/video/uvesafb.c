@@ -817,12 +817,12 @@ static int __devinit uvesafb_vbe_init(struct fb_info *info)
 	par->ypan = ypan;
 
 	if (par->pmi_setpal || par->ypan) {
-		if (pcibios_enabled) {
-			uvesafb_vbe_getpmi(task, par);
-		} else {
+		if (__supported_pte_mask & _PAGE_NX) {
 			par->pmi_setpal = par->ypan = 0;
-			printk(KERN_WARNING "uvesafb: PCI BIOS area is NX."
-				"Can't use protected mode interface\n");
+			printk(KERN_WARNING "uvesafb: NX protection is actively."
+				"We have better not to use the PMI.\n");
+		} else {
+			uvesafb_vbe_getpmi(task, par);
 		}
 	}
 #else
