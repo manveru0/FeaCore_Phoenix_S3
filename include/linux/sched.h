@@ -909,6 +909,7 @@ struct sched_group {
 	atomic_t ref;
 
 	unsigned int group_weight;
+	unsigned long next_update;
 	struct sched_group_power *sgp;
 
 	/*

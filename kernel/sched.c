@@ -296,7 +296,7 @@ static DEFINE_SPINLOCK(task_group_lock);
  *  limitation from this.)
  */
 #define MIN_SHARES	(1UL <<  1)
-#define MAX_SHARES	(1UL << 18)
+#define MAX_SHARES  (1UL << (18 + SCHED_LOAD_RESOLUTION))
 
 static int root_task_group_load = ROOT_TASK_GROUP_LOAD;
 #endif
