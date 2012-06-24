@@ -3613,6 +3613,8 @@ static void ext4_end_io_dio(struct kiocb *iocb, loff_t offset,
 		  "for inode %lu, iocb 0x%p, offset %llu, size %llu\n",
  		  iocb->private, io_end->inode->i_ino, iocb, offset,
 		  size);
+	
+	iocb->private = NULL;
 
 	/* if not aio dio with unwritten extents, just free io and return */
 	if (!(io_end->flag & EXT4_IO_END_UNWRITTEN)) {
@@ -3640,7 +3642,6 @@ out:
 
 	/* queue the work to convert unwritten extents to written */
 	queue_work(wq, &io_end->work);
-	iocb->private = NULL;
 }
 
 static void ext4_end_io_buffer_write(struct buffer_head *bh, int uptodate)
