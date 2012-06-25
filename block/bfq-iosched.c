@@ -432,10 +432,6 @@ static void bfq_add_rq_rb(struct request *rq)
 	bfqq->queued[rq_is_sync(rq)]++;
 	bfqd->queued++;
 
-	/*
-	 * Looks a little odd, but the first insert might return an alias,
-	 * if that happens, put the alias on the dispatch list.
-	 */
 	elv_rb_add(&bfqq->sort_list, rq);
 
 	/*
