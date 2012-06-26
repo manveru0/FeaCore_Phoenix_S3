@@ -852,7 +852,7 @@ ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
 {
 	int i = 0;
 	int j = 0;
-	int u[20] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } , stepcount = 0, tokencount = 0;
+	int u[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } , stepcount = 0, tokencount = 0;
 
 	if(count < 1) return -EINVAL;
 
