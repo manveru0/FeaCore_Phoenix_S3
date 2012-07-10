@@ -418,7 +418,6 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
 	q->backing_dev_info.state = 0;
 	q->backing_dev_info.capabilities = BDI_CAP_MAP_COPY;
 	q->backing_dev_info.name = "block";
-	q->node = node_id;
 
 	err = bdi_init(&q->backing_dev_info);
 	if (err) {
@@ -503,7 +502,7 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
 	if (!uninit_q)
 		return NULL;
 
-	q = blk_init_allocated_queue(uninit_q, rfn, lock);
+	q = blk_init_allocated_queue_node(uninit_q, rfn, lock, node_id);
 	if (!q)
 		blk_cleanup_queue(uninit_q);
 
@@ -515,9 +514,18 @@ struct request_queue *
 blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
 			 spinlock_t *lock)
 {
+	return blk_init_allocated_queue_node(q, rfn, lock, -1);
+}
+EXPORT_SYMBOL(blk_init_allocated_queue);
+
+struct request_queue *
+blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
+			      spinlock_t *lock, int node_id)
+{
 	if (!q)
 		return NULL;
 
+	q->node = node_id;
 	if (blk_init_free_list(q))
 		return NULL;
 
@@ -547,7 +555,7 @@ blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
 
 	return NULL;
 }
-EXPORT_SYMBOL(blk_init_allocated_queue);
+EXPORT_SYMBOL(blk_init_allocated_queue_node);
 
 int blk_get_queue(struct request_queue *q)
 {
@@ -1273,8 +1281,10 @@ get_rq:
 	init_request_from_bio(req, bio);
 
 	if (test_bit(QUEUE_FLAG_SAME_COMP, &q->queue_flags) ||
-	    bio_flagged(bio, BIO_CPU_AFFINE))
-		req->cpu = smp_processor_id();
+	    bio_flagged(bio, BIO_CPU_AFFINE)) {
+		req->cpu = blk_cpu_to_group(get_cpu());
+		put_cpu();
+	}
 
 	plug = current->plug;
 	if (plug) {

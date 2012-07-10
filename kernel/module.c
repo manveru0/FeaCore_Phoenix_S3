@@ -1025,10 +1025,6 @@ static int check_version(Elf_Shdr *sechdrs,
 	/* Exporting module didn't supply crcs?  OK, we're already tainted. */
 	if (!crc)
 		return 1;
-	
-	/* Disable module_layout check for Samsung exfat modules to load. */
-	if (!strncmp("exfat_", mod->name, 6))
-	return 1;
 
 	/* No versions at all?  modprobe --force does this. */
 	if (versindex == 0)
@@ -2294,7 +2290,8 @@ static int copy_and_check(struct load_info *info,
 		return -ENOEXEC;
 
 	/* Suck in entire file: we'll want most of it. */
-	if ((hdr = vmalloc(len)) == NULL)
+	/* vmalloc barfs on "unusual" numbers.  Check here */
+	if (len > 64 * 1024 * 1024 || (hdr = vmalloc(len)) == NULL)
 		return -ENOMEM;
 
 	if (copy_from_user(hdr, umod, len) != 0) {
@@ -2434,14 +2431,9 @@ static int check_modinfo(struct module *mod, struct load_info *info)
 		if (err)
 			return err;
 	} else if (!same_magic(modmagic, vermagic, info->index.vers)) {
-	  // we should try to load it anyway	
-	err = try_to_force_load(mod, "vermagic doesn't equal");
-	if (err)	
-	return err;
-	/*
 		printk(KERN_ERR "%s: version magic '%s' should be '%s'\n",
 		       mod->name, modmagic, vermagic);
-		return -ENOEXEC;*/
+		return -ENOEXEC;
 	}
 
 	if (get_modinfo(info, "staging")) {

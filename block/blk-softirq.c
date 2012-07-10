@@ -103,34 +103,24 @@ static struct notifier_block __cpuinitdata blk_cpu_notifier = {
 
 void __blk_complete_request(struct request *req)
 {
-	int ccpu, cpu, group_cpu = NR_CPUS;
 	struct request_queue *q = req->q;
 	unsigned long flags;
-	
+	int ccpu, cpu, group_cpu;
+
 	BUG_ON(!q->softirq_done_fn);
 
 	local_irq_save(flags);
 	cpu = smp_processor_id();
+	group_cpu = blk_cpu_to_group(cpu);
 
 	/*
-	* Select completion CPU
-	*/
-	if (req->cpu != -1) {
+	 * Select completion CPU
+	 */
+	if (test_bit(QUEUE_FLAG_SAME_COMP, &q->queue_flags) && req->cpu != -1)
 		ccpu = req->cpu;
-		if (!test_bit(QUEUE_FLAG_SAME_FORCE, &q->queue_flags))
-			  ccpu = blk_cpu_to_group(ccpu);
-			  group_cpu = blk_cpu_to_group(cpu);
-	} else
+	else
 		ccpu = cpu;
 
-	/*
-	* If current CPU and requested CPU share a cache, run the softirq on
-	* the current CPU. One might concern this is just like
-	* QUEUE_FLAG_SAME_FORCE, but actually not. blk_complete_request() is
-	* running in interrupt handler, and currently I/O controller doesn't
-	* support multiple interrupts, so current CPU is unique actually. This
-	* avoids IPI sending from current CPU to the first CPU of a group.
-	*/
 	if (ccpu == cpu || ccpu == group_cpu) {
 		struct list_head *list;
 do_local:
@@ -138,11 +128,11 @@ do_local:
 		list_add_tail(&req->csd.list, list);
 
 		/*
-		* if the list only contains our just added request,
-		* signal a raise of the softirq. If there are already
-		* entries there, someone already raised the irq but it
-		* hasn't run yet.
-		*/
+		 * if the list only contains our just added request,
+		 * signal a raise of the softirq. If there are already
+		 * entries there, someone already raised the irq but it
+		 * hasn't run yet.
+		 */
 		if (list->next == &req->csd.list)
 			raise_softirq_irqoff(BLOCK_SOFTIRQ);
 	} else if (raise_blk_irq(ccpu, req))

@@ -1827,11 +1827,6 @@ static void *__slab_alloc(struct kmem_cache *s, gfp_t gfpflags, int node,
 	slab_lock(page);
 	if (unlikely(!node_match(c, node)))
 		goto another_slab;
-	
-	/* must check again c->freelist in case of cpu migration or IRQ */
-	object = c->freelist;
-	if (object)
-		goto update_freelist;
 
 	stat(s, ALLOC_REFILL);
 
@@ -1842,7 +1837,6 @@ load_freelist:
 	if (kmem_cache_debug(s))
 		goto debug;
 
-update_freelist:
 	c->freelist = get_freepointer(s, object);
 	page->inuse = page->objects;
 	page->freelist = NULL;
@@ -2398,7 +2392,7 @@ static void early_kmem_cache_node_alloc(int node)
 	 * the boot sequence, we still disable irqs.
 	 */
 	local_irq_save(flags);
-	add_partial(n, page, 1);
+	add_partial(n, page, 0);
 	local_irq_restore(flags);
 }
 
@@ -3449,14 +3443,13 @@ struct kmem_cache *kmem_cache_create(const char *name, size_t size,
 		if (kmem_cache_open(s, n,
 				size, align, flags, ctor)) {
 			list_add(&s->list, &slab_caches);
-			up_write(&slub_lock);
 			if (sysfs_slab_add(s)) {
-				down_write(&slub_lock);
 				list_del(&s->list);
 				kfree(n);
 				kfree(s);
 				goto err;
 			}
+			up_write(&slub_lock);
 			return s;
 		}
 		kfree(n);
@@ -4084,12 +4077,11 @@ struct slab_attribute {
 };
 
 #define SLAB_ATTR_RO(_name) \
-	static struct slab_attribute _name##_attr = \
-	__ATTR(_name, 0400, _name##_show, NULL)
+	static struct slab_attribute _name##_attr = __ATTR_RO(_name)
 
 #define SLAB_ATTR(_name) \
 	static struct slab_attribute _name##_attr =  \
-	__ATTR(_name, 0600, _name##_show, _name##_store)
+	__ATTR(_name, 0644, _name##_show, _name##_store)
 
 static ssize_t slab_size_show(struct kmem_cache *s, char *buf)
 {
@@ -4912,7 +4904,7 @@ static const struct file_operations proc_slabinfo_operations = {
 
 static int __init slab_proc_init(void)
 {
-	proc_create("slabinfo", S_IRUSR, NULL, &proc_slabinfo_operations);
+	proc_create("slabinfo", S_IRUGO, NULL, &proc_slabinfo_operations);
 	return 0;
 }
 module_init(slab_proc_init);
