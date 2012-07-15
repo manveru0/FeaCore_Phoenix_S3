@@ -28,8 +28,6 @@ static void notrace sched_clock_clksrc_update(void);
 struct timekeeper {
 	/* Current clocksource used for timekeeping. */
 	struct clocksource *clock;
-	/* NTP adjusted clock multiplier */
-	u32	mult;
 	/* The shift value of the current clocksource. */
 	int	shift;
 
@@ -50,37 +48,8 @@ struct timekeeper {
 	/* Shift conversion between clock shifted nano seconds and
 	 * ntp shifted nano seconds. */
 	int	ntp_error_shift;
-
-	/* The current time */
-	struct timespec xtime;
-	/*
-	 * wall_to_monotonic is what we need to add to xtime (or xtime corrected
-	 * for sub jiffie times) to get to monotonic time.  Monotonic is pegged
-	 * at zero at system boot time, so wall_to_monotonic will be negative,
-	 * however, we will ALWAYS keep the tv_nsec part positive so we can use
-	 * the usual normalization.
-	 *
-	 * wall_to_monotonic is moved after resume from suspend for the
-	 * monotonic time not to jump. We need to add total_sleep_time to
-	 * wall_to_monotonic to get the real boot based time offset.
-	 *
-	 * - wall_to_monotonic is no longer the boot time, getboottime must be
-	 * used instead.
-	 */
-	struct timespec wall_to_monotonic;
-	/* time spent in suspend */
-	struct timespec total_sleep_time;
-	/* The raw monotonic time for the CLOCK_MONOTONIC_RAW posix clock. */
-	struct timespec raw_time;
-
-	/* Offset clock monotonic -> clock realtime */
-	ktime_t offs_real;
-
-	/* Offset clock monotonic -> clock boottime */
-	ktime_t offs_boot;
-
-	/* Seqlock for all timekeeper values */
-	seqlock_t lock;
+	/* NTP adjusted clock multiplier */
+	u32	mult;
 };
 
 static struct timekeeper timekeeper;
@@ -1123,7 +1092,6 @@ void do_timer(unsigned long ticks)
 	jiffies_64 += ticks;
 	update_wall_time();
 	sched_clock_clksrc_update();
-	prepare_calc_load();
 	calc_global_load(ticks);
 }
 
@@ -1146,40 +1114,6 @@ void get_xtime_and_monotonic_and_sleep_offset(struct timespec *xtim,
 		*sleep = total_sleep_time;
 	} while (read_seqretry(&xtime_lock, seq));
 }
-
-#ifdef CONFIG_HIGH_RES_TIMERS
-/**
- * ktime_get_update_offsets - hrtimer helper
- * @offs_real:	pointer to storage for monotonic -> realtime offset
- * @offs_boot:	pointer to storage for monotonic -> boottime offset
- *
- * Returns current monotonic time and updates the offsets
- * Called from hrtimer_interupt() or retrigger_next_event()
- */
-ktime_t ktime_get_update_offsets(ktime_t *offs_real, ktime_t *offs_boot)
-{
-	ktime_t now;
-	unsigned int seq;
-	u64 secs, nsecs;
-
-	do {
-		seq = read_seqbegin(&timekeeper.lock);
-
-		secs = timekeeper.xtime.tv_sec;
-		nsecs = timekeeper.xtime.tv_nsec;
-		nsecs += timekeeping_get_ns();
-		/* If arch requires, add in gettimeoffset() */
-		nsecs += arch_gettimeoffset();
-
-		*offs_real = timekeeper.offs_real;
-		*offs_boot = timekeeper.offs_boot;
-	} while (read_seqretry(&timekeeper.lock, seq));
-
-	now = ktime_add_ns(ktime_set(secs, 0), nsecs);
-	now = ktime_sub(now, *offs_real);
-	return now;
-}
-#endif
 
 /**
  * ktime_get_monotonic_offset() - get wall_to_monotonic in ktime_t format
