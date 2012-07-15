@@ -452,7 +452,7 @@ static void set_dvfs_lock(struct mms_ts_info *info, uint32_t on)
 
 	mutex_lock(&info->dvfs_lock);
 	if (info->cpufreq_level <= 0) {
-		ret = exynos_cpufreq_get_level(800000, &info->cpufreq_level);
+		ret = exynos_cpufreq_get_level(600000, &info->cpufreq_level);
 		if (ret < 0)
 			pr_err("[TSP] exynos_cpufreq_get_level error");
 		goto out;
