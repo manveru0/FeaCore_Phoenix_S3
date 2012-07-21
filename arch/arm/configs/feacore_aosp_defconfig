@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Linux/arm 3.0.36 Kernel Configuration
+# Linux/arm 3.0.38 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -37,7 +37,7 @@ CONFIG_HAVE_IRQ_WORK=y
 CONFIG_EXPERIMENTAL=y
 CONFIG_INIT_ENV_ARG_LIMIT=32
 CONFIG_CROSS_COMPILE="/usr/local/arm/arm-eabi-4.4.3/bin/arm-eabi-"
-CONFIG_LOCALVERSION="-FeaCore_Phoenix_1.6.4"
+CONFIG_LOCALVERSION="-FeaCore_Phoenix_1.6.7_aosp"
 # CONFIG_LOCALVERSION_AUTO is not set
 CONFIG_HAVE_KERNEL_GZIP=y
 CONFIG_HAVE_KERNEL_XZ=y
@@ -146,6 +146,7 @@ CONFIG_COMPAT_BRK=y
 CONFIG_SLUB=y
 # CONFIG_SLOB is not set
 # CONFIG_PROFILING is not set
+CONFIG_TRACEPOINTS=y
 CONFIG_HAVE_OPROFILE=y
 # CONFIG_KPROBES is not set
 CONFIG_HAVE_KPROBES=y
@@ -3134,7 +3135,7 @@ CONFIG_ACE_BC_ASYNC=y
 CONFIG_ACE_HASH_SHA1=y
 CONFIG_ACE_HASH_SHA256=y
 # CONFIG_ACE_DEBUG is not set
-# CONFIG_BINARY_PRINTF is not set
+CONFIG_BINARY_PRINTF=y
 
 #
 # Library routines
