@@ -533,6 +533,28 @@ static ssize_t show_an30259a_led_fade(struct device *dev,
     return ret;
 }
 
+static ssize_t store_an30259a_led_fade(struct device *dev,
+					struct device_attribute *devattr,
+					const char *buf, size_t count)
+{
+	int retval;
+	int enabled = 0;
+	struct an30259a_data *data = dev_get_drvdata(dev);
+
+	retval = sscanf(buf, "%d", &enabled);
+
+	if (retval == 0) {
+		dev_err(&data->client->dev, "fail to get led_fade value.\n");
+		return count;
+	}
+
+	led_enable_fade = enabled;
+
+	printk(KERN_DEBUG "led_fade is called\n");
+
+	return count;
+}
+
 static ssize_t store_led_r(struct device *dev,
 	struct device_attribute *devattr, const char *buf, size_t count)
 {
@@ -798,29 +820,6 @@ static int __devinit an30259a_initialize(struct i2c_client *client,
 
 	return 0;
 }
-
-static ssize_t store_an30259a_led_fade(struct device *dev,
-					struct device_attribute *devattr,
-					const char *buf, size_t count)
-{
-	int retval;
-	int enabled = 0;
-	struct an30259a_data *data = dev_get_drvdata(dev);
-
-	retval = sscanf(buf, "%d", &enabled);
-
-	if (retval == 0) {
-		dev_err(&data->client->dev, "fail to get led_fade value.\n");
-		return count;
-	}
-
-	led_enable_fade = enabled;
-
-	printk(KERN_DEBUG "led_fade is called\n");
-
-	return count;
-}
-
 
 static int __devinit an30259a_probe(struct i2c_client *client,
 	const struct i2c_device_id *id)
